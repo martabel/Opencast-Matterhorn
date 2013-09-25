@@ -31,20 +31,70 @@ define(['require', 'jquery', 'underscore', 'backbone', 'engage/engage_core'], fu
   var mediaPackageID = "";
   var mediaPackage; // Mediapackage data
   var mediaInfo; // media infos like video tracks and attachments
-
+  
+  // model prototypes //
+  
+  var MediaPackageModel = Backbone.Model.extend({
+    urlRoot : SEARCH_ENDPOINT,
+    initialize : function () {
+      Engage.log("MhConnection: init MediaPackageModel")
+      //request model data
+      this.fetch({
+        data: {id: mediaPackageID},
+        success : function (model) {
+          var mediaPackage; // Mediapackage data
+          if (model.attributes && model.attributes['search-results'] && model.attributes['search-results'].result) {
+            mediaPackage = model.attributes['search-results'].result;
+            if (mediaPackage) {
+              //format silent the model data, see dublincore for reference names
+              if (mediaPackage.mediapackage.media.track)
+                model.attributes.tracks = mediaPackage.mediapackage.media.track;
+              if (mediaPackage.mediapackage.attachments.attachment)
+                model.attributes.attachments = mediaPackage.mediapackage.attachments.attachment;
+              if (mediaPackage.dcTitle)
+                model.attributes.title = mediaPackage.dcTitle;
+              if (mediaPackage.dcCreator)
+                model.attributes.creator = mediaPackage.dcCreator;
+              if (mediaPackage.dcCreated)
+                model.attributes.date = mediaPackage.dcCreated;
+              if (mediaPackage.dcDescription)
+                model.attributes.description = mediaPackage.dcDescription;
+              if (mediaPackage.dcSubject)
+                model.attributes.subject = mediaPackage.dcSubject;
+            }
+            model.trigger("change"); //one change event
+          } else {
+            // TODO: error
+          } 
+        }
+      });
+    },
+    defaults : {
+      "title" : "",
+      "creator" : "",
+      "date" : "",
+      "description" : "",
+      "subject" : "",
+      "tracks" : {},
+      "attachments" : {}
+    }
+  });
+  
+  // plugin logic //
+  
   Engage.log("MhConnection: init");
 
   // Get ID
-  mediaPackageID = Engage.urlParams.id;
+  //mediaPackageID = Engage.urlParams.id;
+  mediaPackageID = Engage.model.get("urlParameters").id;
   if (!mediaPackageID) {
     mediaPackageID = "";
   }
 
-  // All plugins loaded lets do some stuff
+  // All plugins loaded lets init the models
   Engage.on("Core:plugin_load_done", function () {
-
     Engage.log("MhConnection: receive plugin load done");
-
+    Engage.model.set("mediaPackage", new MediaPackageModel());
   });
 
   function extractMediaInfo() {
