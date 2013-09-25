@@ -79,6 +79,7 @@ import java.util.Dictionary;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -229,6 +230,9 @@ public class ServiceRegistryJpaImpl implements ServiceRegistry, ManagedService {
 
     // Set up persistence
     emf = persistenceProvider.createEntityManagerFactory("org.opencastproject.serviceregistry", persistenceProperties);
+
+    // Clean all undispatchable jobs
+    cleanUndispatchableJobs();
 
     // Find this host's url
     if (cc == null || StringUtils.isBlank(cc.getBundleContext().getProperty("org.opencastproject.server.url"))) {
@@ -1064,6 +1068,40 @@ public class ServiceRegistryJpaImpl implements ServiceRegistry, ManagedService {
   }
 
   /**
+   * Find all undispatchable jobs and set them to CANCELED.
+   */
+  private void cleanUndispatchableJobs() {
+    EntityManager em = null;
+    EntityTransaction tx = null;
+    try {
+      em = emf.createEntityManager();
+      tx = em.getTransaction();
+      tx.begin();
+      Query query = em.createNamedQuery("Job.undispatchable.status");
+      List<Status> statuses = new ArrayList<Job.Status>();
+      statuses.add(Status.INSTANTIATED);
+      statuses.add(Status.RUNNING);
+      query.setParameter("statuses", statuses);
+      @SuppressWarnings("unchecked")
+      List<JobJpaImpl> undispatchableJobs = query.getResultList();
+      for (JobJpaImpl job : undispatchableJobs) {
+        logger.info("Marking undispatchable job {} as canceled", job);
+        job.setStatus(Status.CANCELED);
+        em.merge(job);
+      }
+      tx.commit();
+    } catch (Exception e) {
+      logger.error("Unable to clean undispatchable jobs! {}", e.getMessage());
+      if (tx != null && tx.isActive()) {
+        tx.rollback();
+      }
+    } finally {
+      if (em != null)
+        em.close();
+    }
+  }
+
+  /**
    * Find all running jobs on this service and set them to RESET or CANCELED.
    * 
    * @param serviceType
@@ -1861,7 +1899,7 @@ public class ServiceRegistryJpaImpl implements ServiceRegistry, ManagedService {
         String jobXml = JobParser.toXml(jpaJob);
         List<BasicNameValuePair> params = new ArrayList<BasicNameValuePair>();
         params.add(new BasicNameValuePair("job", jobXml));
-        UrlEncodedFormEntity entity = new UrlEncodedFormEntity(params);
+        UrlEncodedFormEntity entity = new UrlEncodedFormEntity(params, "UTF-8");
         post.setEntity(entity);
       } catch (IOException e) {
         logger.warn("Job parsing error on job {}", job, e);
@@ -2516,6 +2554,9 @@ public class ServiceRegistryJpaImpl implements ServiceRegistry, ManagedService {
 
     private Map<String, Integer> loadByHost = null;
 
+    /** Create a random number generator */
+    private Random randomGenerator = new Random();
+
     /**
      * Creates a new comparator which is using the given map of host names and loads.
      * 
@@ -2534,8 +2575,9 @@ public class ServiceRegistryJpaImpl implements ServiceRegistry, ManagedService {
 
       // If host loads are equal prefer NORMAL service state
       if (compare == 0) {
+        // If the service state is the same, randomly swap the order to achieve evenly distributed load
         if (serviceA.getServiceState() == serviceB.getServiceState())
-          return compare;
+          return randomGenerator.nextInt(2);
         else if (serviceA.getServiceState() == NORMAL)
           return 1;
         else
