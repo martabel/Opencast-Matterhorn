@@ -15,12 +15,11 @@
  */
 /*jslint browser: true, nomen: true*/
 /*global define, CustomEvent*/
-define(['require', 'jquery', 'underscore', 'backbone'], function (require, $, _, Backbone) {
+define(['require', 'jquery', 'underscore', 'backbone', 'engage/engage_model'], function (require, $, _, Backbone, EngageModel) {
   //
   "use strict"; // strict mode in all our application
   //
-  var PLUGIN_MANAGER_PATH = '/engage/theodul/manager/list.json';
-  var PLUGIN_PATH = '/engage/theodul/plugin/';
+
   //Global private core variables
   var plugin_count = 0;
 
@@ -29,47 +28,20 @@ define(['require', 'jquery', 'underscore', 'backbone'], function (require, $, _,
     console.log("Core: Init");
   }
 
-  // Build Backbone environment //
-
-  var PluginInfoModel = Backbone.Model.extend({
-    // URL of the search enpoint
-    urlRoot : PLUGIN_MANAGER_PATH,
-    initialize : function () {
-       if (window.console) {
-        console.log("Core: init plugin info model");
-      }
-    },
-    defaults : {
-      "pluginlist" : {
-        "plugins" : {}
-      }
-    }
-  });
-
-  // Main core,
+  /*
+   * Main core
+   */ 
   var EngageCore = Backbone.View.extend({
     el : $("#engage_view"),
     initialize : function () {
       // The main core is our global event system
       _.extend(this, Backbone.Events);
-      // PluginInfoModel to store plugin informations
-      this.pluginInfos = new PluginInfoModel();
+      //link to the engage model
+      this.model = new EngageModel();
       // load Stream Event
       this.on("Core:init", function () {
-        // parse url parameters
-        var match, pl = /\+/g, // Regex for replacing addition symbol
-                                // with a space
-        search = /([^&=]+)=?([^&]*)/g, decode = function (s) {
-          return decodeURIComponent(s.replace(pl, " "));
-        }, query = window.location.search.substring(1);
-  
-        //parse url parameter //TODO do it in a function
-        this.urlParams = {}; // stores url params
-        while (match = search.exec(query)) {
-          this.urlParams[decode(match[1])] = decode(match[2]);
-        }      
         // fetch plugin information
-        this.pluginInfos.fetch({
+        this.model.get('pluginsInfo').fetch({
           success : function (pluginInfos) {
             // load plugin as requirejs module
             if (pluginInfos.get('pluginlist') && pluginInfos.get('pluginlist').plugins !== undefined) {
@@ -110,7 +82,9 @@ define(['require', 'jquery', 'underscore', 'backbone'], function (require, $, _,
   // Fire init event
   engageCore.trigger("Core:init");
 
-  // BEGIN Private core functions BEGIN//
+  /*
+   * BEGIN Private core functions
+   */ 
   function addPluginLogic() {
     // first tab is on startup active
     $('#engage_tab_nav li:first').addClass("active");
@@ -173,38 +147,31 @@ define(['require', 'jquery', 'underscore', 'backbone'], function (require, $, _,
           $("head").append(link);
         }
       }
-      /*
-       * Web Components logic //load html import link tags into the html head
-       * var link = $("<link>"); link.attr({ rel: 'import', href:
-       * plugin_path+"/"+plugin.insert }); $("head").append(link); //insert new
-       * html web component into the DOM $("#"+plugin.type).append("<"+plugin.name+"></"+plugin.name+">");
-       */
+
       if (plugin.template !== "none") {
         // load template async
-        $
-            .get(plugin_path + "/" + plugin.template, function (template) {
-              // empty data object
-              var template_data = {};
-              // add template if not undefined
-              if (plugin.template_data !== undefined) {
-                template_data = plugin.template_data;
-              }          
-              // add full plugin path to the tmeplate data
-              template_data.plugin_path = plugin_path;
-              // Process the template using underscore
-              var processed_template = _.template(template, template_data);
-              // Load the compiled HTML into the component
-              insertProcessedTemplate(processed_template, plugin.type, plugin.name);
-              // plugin load done counter
-              plugin_count -= 1;
-              if (plugin_count === 0) {
-                // init HTML import link tags
-                // loadHTMLImports();
-                addPluginLogic();
-                // Trigger done event
-                engageCore.trigger("Core:plugin_load_done");
-              }
-            });
+        $.get(plugin_path + "/" + plugin.template, function (template) {
+          // empty data object
+          var template_data = {};
+          // add template if not undefined
+          if (plugin.template_data !== undefined) {
+            template_data = plugin.template_data;
+          }          
+          // add full plugin path to the tmeplate data
+          template_data.plugin_path = plugin_path;
+          // Process the template using underscore
+          var processed_template = _.template(template, template_data);
+          // Load the compiled HTML into the component
+          insertProcessedTemplate(processed_template, plugin.type, plugin.name);
+          // plugin load done counter
+          plugin_count -= 1;
+          plugin.template = template;
+          if (plugin_count === 0) {
+            addPluginLogic();
+            // Trigger done event
+            engageCore.trigger("Core:plugin_load_done");
+          }
+        });
       } else {
         plugin_count -= 1;
         if (plugin_count === 0) {
@@ -216,7 +183,9 @@ define(['require', 'jquery', 'underscore', 'backbone'], function (require, $, _,
     });
 
   }
-  //END Private core functions END//
+  /*
+   * END Private core functions
+   */ 
 
   return engageCore;
 });
