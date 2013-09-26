@@ -5,3 +5,7 @@
 #engage_basic_description h2 {
   font-size: 18px;
 }
+
+.engage_basic_description_wrap {
+	float:left;
+}
