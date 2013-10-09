@@ -730,8 +730,8 @@
       <modules>
         <module>modules/matterhorn-engage-theodul-api</module>
         <module>modules/matterhorn-engage-theodul-core</module>
-        <module>modules/matterhorn-engage-theodul-plugin-controls-mockup</module>
-        <module>modules/matterhorn-engage-theodul-plugin-description-mockup</module>
+        <module>modules/matterhorn-engage-theodul-plugin-controls</module>
+        <module>modules/matterhorn-engage-theodul-plugin-description</module>
         <module>modules/matterhorn-engage-theodul-plugin-tab-description</module>
         <module>modules/matterhorn-engage-theodul-plugin-tab-slidetext</module>
         <module>modules/matterhorn-engage-theodul-plugin-video-videojs</module>
