@@ -27,7 +27,7 @@ define(['require', 'jquery', 'underscore', 'backbone', 'engage/engage_core'], fu
         "style.css",
         "lib/videojs/video-js.css"
     ];
-    var initCount = 2;
+    var initCount = 3;
     var videoSources = [];
     videoSources.presenter = [];
     videoSources.presentation = [];
@@ -54,57 +54,68 @@ define(['require', 'jquery', 'underscore', 'backbone', 'engage/engage_core'], fu
             var theodulVideodisplay = this;
             // set sources
             theodulVideodisplay.src(videoSource);
-
-            Engage.on("Video:play", function() {
-                theodulVideodisplay.play();
-            });
-            Engage.on("Video:stop", function() {
-                theodulVideodisplay.stop();
-            });
-            Engage.on("Video:pause", function() {
-                theodulVideodisplay.pause();
-            });
-            Engage.on("Video:goFullscreen", function() {
-                theodulVideodisplay.requestFullScreen();
-            });
-            Engage.on("Video:cancelFullscreen", function() {
-                theodulVideodisplay.cancelFullScreen();
-            });
-            Engage.on("Video:setVolumne", function(percentAsDecimal) {
-                theodulVideodisplay.volume(percentAsDecimal);
-            });
-            Engage.on("Video:getVolumne", function(callback) {
-                callback(theodulVideodisplay.volume());
-            });
-            /*
-             theodulVideodisplay.on("play", function() {
-             Engage.trigger("Video:play");
-             });
-             theodulVideodisplay.on("pause", function() {
-             Engage.trigger("Video:pause");
-             });
-             */
-            theodulVideodisplay.on("timeupdate", function() {
-                Engage.trigger("Video:timeupdate", theodulVideodisplay.currentTime());
-            });
-            theodulVideodisplay.on("volumechange", function() {
-                Engage.trigger("Video:volumechange", theodulVideodisplay.volume());
-            });
         });
         // URL to the Flash SWF
-        // videojs.options.flash.swf = videojs_swf;
+        // videojs.options.flash.swf = videojs_swf; // TODO: Set and comment in
+    }
+
+    function registerEvents(theodulVideodisplay) {
+        Engage.on("Video:play", function() {
+            theodulVideodisplay.play();
+        });
+        Engage.on("Video:stop", function() {
+            theodulVideodisplay.stop();
+        });
+        Engage.on("Video:pause", function() {
+            theodulVideodisplay.pause();
+        });
+        Engage.on("Video:goFullscreen", function() {
+            theodulVideodisplay.requestFullScreen();
+        });
+        Engage.on("Video:cancelFullscreen", function() {
+            theodulVideodisplay.cancelFullScreen();
+        });
+        Engage.on("Video:setVolumne", function(percentAsDecimal) {
+            theodulVideodisplay.volume(percentAsDecimal);
+        });
+        Engage.on("Video:getVolumne", function(callback) {
+            callback(theodulVideodisplay.volume());
+        });
+        /*
+         theodulVideodisplay.on("play", function() {
+         Engage.trigger("Video:play");
+         });
+         theodulVideodisplay.on("pause", function() {
+         Engage.trigger("Video:pause");
+         });
+         */
+        theodulVideodisplay.on("timeupdate", function() {
+            Engage.trigger("Video:timeupdate", theodulVideodisplay.currentTime());
+        });
+        theodulVideodisplay.on("volumechange", function() {
+            Engage.trigger("Video:volumechange", theodulVideodisplay.volume());
+        });
     }
 
     function initVideojs() {
         Engage.log(videoSources);
 
         var i = 0;
+        var nrOfVideodisplays = 0;
         for (var v in videoSources) {
             ++i;
 
             if (videoSources[v].length > 0) {
+                ++nrOfVideodisplays;
                 initVideojsVideo("videojs_videodisplay_".concat(i), videoSources[v]);
             }
+        }
+
+        // TODO: Implement a more elegant solution
+        registerEvents(videojs("videojs_videodisplay_1"));
+        if (nrOfVideodisplays >= 2) {
+            $.synchronizeVideos("videojs_videodisplay_1", "videojs_videodisplay_2", true);
+            Engage.log("Videodisplay 1 and 2 are now synchronized");
         }
     }
 
@@ -152,6 +163,15 @@ define(['require', 'jquery', 'underscore', 'backbone', 'engage/engage_core'], fu
     // Load videojs lib
     require(["./lib/videojs/video.js"], function(videojs) {
         Engage.log("Video: load video.js done");
+        initCount -= 1;
+        if (initCount === 0) {
+            initPlugin();
+        }
+    });
+
+    // Load synchronize jquery lib
+    require(["./lib/synchronize.js"], function(videojs) {
+        Engage.log("Video: load synchronize.js done");
         initCount -= 1;
         if (initCount === 0) {
             initPlugin();
