@@ -96,7 +96,7 @@
 							<goal>lint</goal>
 						</goals>
 						<configuration>
-							<failOnError>true</failOnError>
+							<failOnError>false</failOnError>
 							<options>
 								<undef>true</undef>
 								<predef>videojs, _V_, define</predef>
