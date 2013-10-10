@@ -171,7 +171,10 @@ define(['require', 'jquery', 'underscore', 'backbone', 'engage/engage_core'], fu
         });
     }
 
-    function initPlugin() {   
+    function initPlugin() {
+      //set path to swf player
+      videojs_swf = plugin.pluginPath + "/lib/videojs/video-js.swf";
+      
       Engage.model.on("change:videoDataModel", function() {
           new VideoDataView(this.get("videoDataModel"), plugin.template);
       });
@@ -272,18 +275,6 @@ define(['require', 'jquery', 'underscore', 'backbone', 'engage/engage_core'], fu
             initPlugin();
         }
     });
-
-    // load video.js swf
-    /*
-     require(["./lib/videojs/video-js.swf"], function(_videojs_swf) {
-     Engage.log("Video: load video-js.swf done");
-     videojs_swf = _videojs_swf;
-     initCount -= 1;
-     if (initCount === 0) {
-     initPlugin();
-     }
-     });
-     */
 
     // all plugins loaded
     Engage.on("Core:plugin_load_done", function() {
