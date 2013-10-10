@@ -63,7 +63,6 @@
             var ct1 = getCurrentTime(id1);
             var ct2 = getCurrentTime(id2);
             if ((ct1 != -1) && (ct2 != -1) && !isInInterval(ct2, ct1 - 1, ct1 + 1)) { // currentTime in seconds!
-
                 if (!seek(id2, ct1)) {
                     pause(id2);
                 }

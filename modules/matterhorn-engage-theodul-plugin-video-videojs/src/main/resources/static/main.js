@@ -28,13 +28,14 @@ define(['require', 'jquery', 'underscore', 'backbone', 'engage/engage_core'], fu
         "lib/videojs/video-js.css"
     ];
     var initCount = 3;
+    var videoDisplays = [];
     var videoSources = [];
     videoSources.presenter = [];
     videoSources.presentation = [];
     var videojs_swf;
 
     function initVideojsVideo(id, videoSource) {
-        Engage.log("initVideojsVideo: Initializing video.js-display: " + id);
+        Engage.log("Initializing video.js-display: " + id);
 
         //insert video tag
         $("#videojs_wrapper").append('<p><video id="' + id + '" class="video-js vjs-default-skin container"></video></p><br />');
@@ -43,7 +44,7 @@ define(['require', 'jquery', 'underscore', 'backbone', 'engage/engage_core'], fu
             "controls": false,
             "autoplay": false,
             "preload": "auto",
-            "poster": videoSource.poster, // TODO: Can only be set when controls=true -.-
+            "poster": videoSource.poster,
             "loop": "false",
             "width": 640,
             "height": 480
@@ -97,35 +98,56 @@ define(['require', 'jquery', 'underscore', 'backbone', 'engage/engage_core'], fu
         });
     }
 
-    function initVideojs() {
-        Engage.log(videoSources);
-
-        var i = 0;
-        var nrOfVideodisplays = 0;
+    function getNrOfVideoSources() {
+        var nr = 0;
         for (var v in videoSources) {
-            ++i;
-
             if (videoSources[v].length > 0) {
-                ++nrOfVideodisplays;
-                initVideojsVideo("videojs_videodisplay_".concat(i), videoSources[v]);
+                ++nr;
             }
         }
+        return nr;
+    }
 
-        // TODO: Implement a more elegant solution
-        registerEvents(videojs("videojs_videodisplay_1"));
-        if (nrOfVideodisplays >= 2) {
-            $.synchronizeVideos("videojs_videodisplay_1", "videojs_videodisplay_2", true);
-            Engage.log("Videodisplay 1 and 2 are now synchronized");
+    function initVideojs() {
+        // Engage.log("Video sources:");
+        // Engage.log(videoSources);
+
+        var i = 0;
+        for (var v in videoSources) {
+            if (videoSources[v].length > 0) {
+                var name = "videojs_videodisplay_".concat(i);
+                videoDisplays.push(name);
+                initVideojsVideo(name, videoSources[v]);
+            }
+            ++i;
+        }
+        // Small hack for the posters: A poster is only being displayed when controls=true, so do it manually
+        $(".vjs-poster").show();
+
+        if (videoDisplays.length > 0) {
+            // set first videoDisplay as master
+            registerEvents(videojs(videoDisplays[0]));
+            if (getNrOfVideoSources() >= 2) {
+                for (var vd in videoDisplays) {
+                    if (vd > 0) {
+                        // sync every other videodisplay with the master
+                        $.synchronizeVideos(videoDisplays[0], videoDisplays[vd], true);
+                        Engage.log("Videodisplay " + vd + " is now being synchronized with the master videodisplay " + 0);
+                    }
+                }
+            }
         }
     }
 
     function initPlugin() {
         // Get media infos from the Endpoint plugin
         Engage.trigger("MhConnection:getMediaInfo", function(mediaInfo) {
-            Engage.log(mediaInfo);
+            // Engage.log("Media info:");
+            // Engage.log(mediaInfo);
             // look for video source
             $(mediaInfo.tracks).each(function(i, track) {
                 if (track.mimetype.match(/video/g)) {
+                    // filter for different video sources
                     if (track.type.match(/presenter/g)) {
                         videoSources.presenter.push({
                             src: track.url,
@@ -142,25 +164,24 @@ define(['require', 'jquery', 'underscore', 'backbone', 'engage/engage_core'], fu
                 }
             });
             $(mediaInfo.attachments).each(function(i, attachment) {
-                if (attachment.mimetype.match(/image/g)
-                        && attachment.type.match(/presenter/g)
-                        && attachment.type.match(/player/g)) {
-                    videoSources.presenter.poster = attachment.url;
-                }
-                if (attachment.mimetype.match(/image/g)
-                        && attachment.type.match(/presentation/g)
-                        && attachment.type.match(/player/g)) {
-                    videoSources.presentation.poster = attachment.url;
+                if (attachment.mimetype.match(/image/g) && attachment.type.match(/player/g)) {
+                    // filter for different video sources
+                    if (attachment.type.match(/presenter/g)) {
+                        videoSources.presenter.poster = attachment.url;
+                    }
+                    if (attachment.type.match(/presentation/g)) {
+                        videoSources.presentation.poster = attachment.url;
+                    }
                 }
             });
-            // init VideoJS object
+            // init video.js
             initVideojs();
         });
     }
     // Init Event
     Engage.log("Video:init");
 
-    // Load videojs lib
+    // Load video.js lib
     require(["./lib/videojs/video.js"], function(videojs) {
         Engage.log("Video: load video.js done");
         initCount -= 1;
@@ -169,7 +190,7 @@ define(['require', 'jquery', 'underscore', 'backbone', 'engage/engage_core'], fu
         }
     });
 
-    // Load synchronize jquery lib
+    // Load synchronize lib
     require(["./lib/synchronize.js"], function(videojs) {
         Engage.log("Video: load synchronize.js done");
         initCount -= 1;
@@ -178,7 +199,7 @@ define(['require', 'jquery', 'underscore', 'backbone', 'engage/engage_core'], fu
         }
     });
 
-    // Load videojs swf
+    // Load video.js swf
     /* TODO
      require(["./lib/videojs/video-js.swf"], function(_videojs_swf) {
      Engage.log("Video: load video-js.swf done");
@@ -190,7 +211,7 @@ define(['require', 'jquery', 'underscore', 'backbone', 'engage/engage_core'], fu
      });
      */
 
-    // All plugins loaded lets do some stuff
+    // All plugins loaded, let's do some stuff!
     Engage.on("Core:plugin_load_done", function() {
         Engage.log("Video: receive plugin load done");
         initCount -= 1;
