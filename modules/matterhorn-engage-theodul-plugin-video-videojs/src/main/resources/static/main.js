@@ -16,9 +16,7 @@
 /*jslint browser: true, nomen: true*/
 /*global define*/
 define(['require', 'jquery', 'underscore', 'backbone', 'engage/engage_core'], function(require, $, _, Backbone, Engage) {
-    //
     "use strict"; // strict mode in all our application
-    //
     var PLUGIN_NAME = "Engage VideoJS Videodisplay",
             PLUGIN_TYPE = "engage_video",
             PLUGIN_VERSION = "0.1",
@@ -27,7 +25,10 @@ define(['require', 'jquery', 'underscore', 'backbone', 'engage/engage_core'], fu
         "style.css",
         "lib/videojs/video-js.css"
     ];
-    var initCount = 3;
+    var videoDisplayNamePrefix = "videojs_videodisplay_";
+    var videoPosterClass = ".vjs-poster";
+    var videoWrapperClass = "#videojs_wrapper";
+    var initCount = 4;
     var videoDisplays = [];
     var videoSources = [];
     videoSources.presenter = [];
@@ -38,7 +39,7 @@ define(['require', 'jquery', 'underscore', 'backbone', 'engage/engage_core'], fu
         Engage.log("Initializing video.js-display: " + id);
 
         //insert video tag
-        $("#videojs_wrapper").append('<p><video id="' + id + '" class="video-js vjs-default-skin container"></video></p><br />');
+        $(videoWrapperClass).append('<p><video id="' + id + '" class="video-js vjs-default-skin container"></video></p><br />');
 
         var videoOptions = {
             "controls": false,
@@ -57,7 +58,12 @@ define(['require', 'jquery', 'underscore', 'backbone', 'engage/engage_core'], fu
             theodulVideodisplay.src(videoSource);
         });
         // URL to the Flash SWF
-        // videojs.options.flash.swf = videojs_swf; // TODO: Set and comment in
+        if (videojs_swf) {
+            Engage.log("Loaded flash component");
+            videojs.options.flash.swf = videojs_swf;
+        } else {
+            Engage.log("No flash component loaded");
+        }
     }
 
     function registerEvents(theodulVideodisplay) {
@@ -109,20 +115,17 @@ define(['require', 'jquery', 'underscore', 'backbone', 'engage/engage_core'], fu
     }
 
     function initVideojs() {
-        // Engage.log("Video sources:");
-        // Engage.log(videoSources);
-
         var i = 0;
         for (var v in videoSources) {
             if (videoSources[v].length > 0) {
-                var name = "videojs_videodisplay_".concat(i);
+                var name = videoDisplayNamePrefix.concat(i);
                 videoDisplays.push(name);
                 initVideojsVideo(name, videoSources[v]);
             }
             ++i;
         }
-        // Small hack for the posters: A poster is only being displayed when controls=true, so do it manually
-        $(".vjs-poster").show();
+        // small hack for the posters: A poster is only being displayed when controls=true, so do it manually
+        $(videoPosterClass).show();
 
         if (videoDisplays.length > 0) {
             // set first videoDisplay as master
@@ -140,80 +143,85 @@ define(['require', 'jquery', 'underscore', 'backbone', 'engage/engage_core'], fu
     }
 
     function initPlugin() {
-        // Get media infos from the Endpoint plugin
+        // get media infos from the Endpoint plugin
         Engage.trigger("MhConnection:getMediaInfo", function(mediaInfo) {
-            // Engage.log("Media info:");
-            // Engage.log(mediaInfo);
             // look for video source
-            $(mediaInfo.tracks).each(function(i, track) {
-                if (track.mimetype.match(/video/g)) {
-                    // filter for different video sources
-                    if (track.type.match(/presenter/g)) {
-                        videoSources.presenter.push({
-                            src: track.url,
-                            type: track.mimetype,
-                            typemh: track.type
-                        });
-                    } else if (track.type.match(/presentation/g)) {
-                        videoSources.presentation.push({
-                            src: track.url,
-                            type: track.mimetype,
-                            typemh: track.type
-                        });
+            if (mediaInfo.tracks) {
+                $(mediaInfo.tracks).each(function(i, track) {
+                    if (track.mimetype
+                            && track.type
+                            && track.mimetype.match(/video/g)) {
+                        // filter for different video sources
+                        if (track.type.match(/presenter/g)) {
+                            videoSources.presenter.push({
+                                src: track.url,
+                                type: track.mimetype,
+                                typemh: track.type
+                            });
+                        } else if (track.type.match(/presentation/g)) {
+                            videoSources.presentation.push({
+                                src: track.url,
+                                type: track.mimetype,
+                                typemh: track.type
+                            });
+                        }
                     }
-                }
-            });
-            $(mediaInfo.attachments).each(function(i, attachment) {
-                if (attachment.mimetype.match(/image/g) && attachment.type.match(/player/g)) {
-                    // filter for different video sources
-                    if (attachment.type.match(/presenter/g)) {
-                        videoSources.presenter.poster = attachment.url;
+                });
+            }
+            if (mediaInfo.attachments) {
+                $(mediaInfo.attachments).each(function(i, attachment) {
+                    if (attachment.mimetype
+                            && attachment.type
+                            && attachment.mimetype.match(/image/g)
+                            && attachment.type.match(/player/g)) {
+                        // filter for different video sources
+                        if (attachment.type.match(/presenter/g)) {
+                            videoSources.presenter.poster = attachment.url;
+                        }
+                        if (attachment.type.match(/presentation/g)) {
+                            videoSources.presentation.poster = attachment.url;
+                        }
                     }
-                    if (attachment.type.match(/presentation/g)) {
-                        videoSources.presentation.poster = attachment.url;
-                    }
-                }
-            });
+                });
+            }
             // init video.js
             initVideojs();
         });
     }
-    // Init Event
+    // init Event
     Engage.log("Video:init");
 
-    // Load video.js lib
+    // load video.js lib
     require(["./lib/videojs/video.js"], function(videojs) {
-        Engage.log("Video: load video.js done");
+        Engage.log("Video: Load video.js done");
         initCount -= 1;
         if (initCount === 0) {
             initPlugin();
         }
     });
 
-    // Load synchronize lib
+    // load synchronize lib
     require(["./lib/synchronize.js"], function(videojs) {
-        Engage.log("Video: load synchronize.js done");
+        Engage.log("Video: Load synchronize.js done");
         initCount -= 1;
         if (initCount === 0) {
             initPlugin();
         }
     });
 
-    // Load video.js swf
-    /* TODO
-     require(["./lib/videojs/video-js.swf"], function(_videojs_swf) {
-     Engage.log("Video: load video-js.swf done");
-     videojs_swf = _videojs_swf;
-     initCount -= 1;
-     if (initCount === 0) {
-     initPlugin();
-     }
-     });
-     */
+    // load video.js swf
+    require(["./lib/videojs/video-js.swf"], function(_videojs_swf) {
+        Engage.log("Video: load video-js.swf done");
+        videojs_swf = _videojs_swf;
+        initCount -= 1;
+        if (initCount === 0) {
+            initPlugin();
+        }
+    });
 
-    // All plugins loaded, let's do some stuff!
+    // all plugins loaded
     Engage.on("Core:plugin_load_done", function() {
-        Engage.log("Video: receive plugin load done");
+        Engage.log("Video: Plugin load done");
         initCount -= 1;
         if (initCount === 0) {
             initPlugin();

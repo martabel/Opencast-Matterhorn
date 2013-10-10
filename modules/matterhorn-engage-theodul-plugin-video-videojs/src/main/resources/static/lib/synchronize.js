@@ -46,7 +46,7 @@
     }
 
     function seek(id, time) {
-        if (id && time && (time <= getDuration(id))) {
+        if (id && time && (time >= 0) && (time <= getDuration(id))) {
             videojs(id).currentTime(time);
             return true;
         } else {
@@ -55,7 +55,11 @@
     }
 
     function isInInterval(num, lower, upper) {
-        return ((num >= lower) && (num <= upper));
+        if (num && lower && upper && (lower <= upper)) {
+            return ((num >= lower) && (num <= upper));
+        } else {
+            return false;
+        }
     }
 
     function synch(id1, id2) {
@@ -70,7 +74,7 @@
         }
     }
 
-    var synchVid = function(videoId1, videoId2) {
+    var synchronizeVideos_helper = function(videoId1, videoId2) {
         player_master.on("play", function() {
             player_slave.play();
             player_slave.volume(0);
@@ -97,27 +101,30 @@
     }
 
     $.synchronizeVideos = function(videoId1, videoId2, vid1Master) {
-        videojs(videoId1).ready(function() {
-            vid1Init = true;
-            if (vid1Master) {
-                player_master = this;
-            } else {
-                player_slave = this;
-            }
-            if (vid2Init) {
-                synchVid(videoId1, videoId2);
-            }
-        });
-        videojs(videoId2).ready(function() {
-            vid2Init = true;
-            if (vid1Master) {
-                player_slave = this;
-            } else {
-                player_master = this;
-            }
-            if (vid1Init) {
-                synchVid(videoId1, videoId2);
-            }
-        });
+        vid1Master = vid1Master || false;
+        if (videoId1 && videoId2) {
+            videojs(videoId1).ready(function() {
+                vid1Init = true;
+                if (vid1Master) {
+                    player_master = this;
+                } else {
+                    player_slave = this;
+                }
+                if (vid2Init) {
+                    synchronizeVideos_helper(videoId1, videoId2);
+                }
+            });
+            videojs(videoId2).ready(function() {
+                vid2Init = true;
+                if (vid1Master) {
+                    player_slave = this;
+                } else {
+                    player_master = this;
+                }
+                if (vid1Init) {
+                    synchronizeVideos_helper(videoId1, videoId2);
+                }
+            });
+        }
     }
 })(jQuery);
