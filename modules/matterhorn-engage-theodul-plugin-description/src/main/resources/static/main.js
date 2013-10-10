@@ -15,92 +15,88 @@
  */
 /*jslint browser: true, nomen: true*/
 /*global define*/
-define(['require', 'jquery', 'underscore', 'backbone', 'engage/engage_core'], function (require, $, _, Backbone, Engage) {
-  //
-  "use strict"; // strict mode in all our application
-  //
-  var PLUGIN_NAME = "Basic Engage Description";
-  var PLUGIN_TYPE = "engage_description";
-  var PLUGIN_VERSION = "0.1";
-  var PLUGIN_TEMPLATE = "template.html";
-  var PLUGIN_STYLES = [ "style.css" ];
-	
-  var plugin = {
-      name: PLUGIN_NAME,
-      type: PLUGIN_TYPE,
-      version: PLUGIN_VERSION,
-      styles: PLUGIN_STYLES,
-      template: PLUGIN_TEMPLATE
-  }
-	//privates //
-	
-	var initCount = 2; //wait for two inits, moment lib and plugin load done
+define(['require', 'jquery', 'underscore', 'backbone', 'engage/engage_core'], function(require, $, _, Backbone, Engage) {
+    "use strict"; // strict mode in all our application
+    var PLUGIN_NAME = "Basic Engage Description";
+    var PLUGIN_TYPE = "engage_description";
+    var PLUGIN_VERSION = "0.1";
+    var PLUGIN_TEMPLATE = "template.html";
+    var PLUGIN_STYLES = ["style.css"];
+    var plugin = {
+        name: PLUGIN_NAME,
+        type: PLUGIN_TYPE,
+        version: PLUGIN_VERSION,
+        styles: PLUGIN_STYLES,
+        template: PLUGIN_TEMPLATE
+    };
+    //privates //
 
-  // view //
-  
-  var DescriptionView = Backbone.View.extend({
-    el: $("#engage_description"), // Every view has a element associated with it
-    initialize: function(mediaPackageModel, template){
-      this.model = mediaPackageModel;
-      this.template = template;
-      //bound the render function always to the view
-      _.bindAll(this, "render");
-      //listen for changes of the model and bind the render function to this
-      this.model.bind("change", this.render);
-    },
-    render: function(){
-      //format values
-      var tempVars = {
-        title : this.model.get("title"),
-        creator : this.model.get("creator"),
-        date : this.model.get("date")
-      };
-      //try to format the date
-      if(moment(tempVars.date) !== null) {
-        tempVars.date = moment(this.model.get("date")).format("MMMM Do YYYY");
-      }
-      // compile template and load into the html
-      this.$el.html( _.template( this.template, tempVars ) );
-    }
-  });
-  
-	// model listener //
-	
-  Engage.model.on("change:mediaPackage", function() { // listen on a change/set of the mediaPackage model
-    
-    //create a new view with the media package model and the template
-    new DescriptionView(this.get("mediaPackage"), plugin.template);
-    /*//Example how get a property of a model
-    this.get("mediaPackage").on("change:title", function(){ 
-      Engage.log("media title changed");
-      //insert titel
-      $("#engage_basic_description_title").html(this.get("title"));
+    var initCount = 2; //wait for two inits, moment lib and plugin load done
+
+    // view //
+
+    var DescriptionView = Backbone.View.extend({
+        el: $("#engage_description"), // Every view has a element associated with it
+        initialize: function(mediaPackageModel, template) {
+            this.model = mediaPackageModel;
+            this.template = template;
+            //bound the render function always to the view
+            _.bindAll(this, "render");
+            //listen for changes of the model and bind the render function to this
+            this.model.bind("change", this.render);
+        },
+        render: function() {
+            //format values
+            var tempVars = {
+                title: this.model.get("title"),
+                creator: this.model.get("creator"),
+                date: this.model.get("date")
+            };
+            //try to format the date
+            if (moment(tempVars.date) !== null) {
+                tempVars.date = moment(this.model.get("date")).format("MMMM Do YYYY");
+            }
+            // compile template and load into the html
+            this.$el.html(_.template(this.template, tempVars));
+        }
     });
-    */    
-  });
-	
-	//functions
-	function initPlugin() {
-    //do some init stuff
-	}
-	
-	//inits
-	Engage.log("Description: init");
-  // Load moment.js lib
-  require([ "./lib/moment.min.js" ], function (momentjs) {
-    Engage.log("Description: load moment.min.js done");
-    initCount -= 1;
-    if (initCount === 0) {
-      initPlugin();
+
+    // model listener //
+
+    Engage.model.on("change:mediaPackage", function() { // listen on a change/set of the mediaPackage model
+        //create a new view with the media package model and the template
+        new DescriptionView(this.get("mediaPackage"), plugin.template);
+        /*//Example how get a property of a model
+         this.get("mediaPackage").on("change:title", function(){ 
+         Engage.log("media title changed");
+         //insert titel
+         $("#engage_basic_description_title").html(this.get("title"));
+         });
+         */
+    });
+
+    //functions
+    function initPlugin() {
+        //do some init stuff
     }
-  });
-  //All plugins loaded
-  Engage.on("Core:plugin_load_done", function () {
-    initCount -= 1;
-    if (initCount === 0) {
-      initPlugin();
-    }
-  });
-    
-  return plugin;
+
+    //inits
+    Engage.log("Description: init");
+    // Load moment.js lib
+    require(["./lib/moment.min.js"], function(momentjs) {
+        Engage.log("Description: load moment.min.js done");
+        initCount -= 1;
+        if (initCount === 0) {
+            initPlugin();
+        }
+    });
+    //All plugins loaded
+    Engage.on("Core:plugin_load_done", function() {
+        initCount -= 1;
+        if (initCount === 0) {
+            initPlugin();
+        }
+    });
+
+    return plugin;
 });

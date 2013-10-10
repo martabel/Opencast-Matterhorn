@@ -1,3 +1,10 @@
 <div id="videojs_wrapper">
-
+    <% if(typeof ids !== "undefined" ){ %>
+        <% _.each(ids, function(id) { %>
+        <p>
+            <video id="<%= id %>" class="video-js vjs-default-skin container"></video>
+        </p>
+        <br />
+        <% }); %>
+    <% } %>
 </div>
