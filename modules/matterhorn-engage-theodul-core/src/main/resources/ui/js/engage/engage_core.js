@@ -97,12 +97,15 @@ define(['require', 'jquery', 'underscore', 'backbone', 'engage/engage_model'], f
   }
 
   function insertProcessedTemplate(processed_template, plugin_type, plugin_name) {
+    var container = "";
     switch (plugin_type) {
     case "engage_controls":       
       $("#engage_controls").html(processed_template);
+      container = "#engage_controls";
       break;  
     case "engage_video":        
       $("#engage_video").html(processed_template);
+      container = "#engage_video";
       break;        
     case "engage_tab":        
       var tab_ref = plugin_name.replace(/ /g, "_");
@@ -112,12 +115,15 @@ define(['require', 'jquery', 'underscore', 'backbone', 'engage/engage_model'], f
       // insert tab content
       var tabTag = '<div class="tab-pane" id="engage_' + tab_ref + '_tab">' + processed_template + '</div>';
       $("#engage_tab_content").prepend(tabTag);
+      container = "#engage_" + tab_ref + "_tab";
       break;
     case "engage_description":
       $("#engage_description").html(processed_template);
+      container = "#engage_description";
       break;      
     default:
     }
+    return container;
   }
   
   function loadPlugin(plugin_path) {
@@ -162,10 +168,11 @@ define(['require', 'jquery', 'underscore', 'backbone', 'engage/engage_model'], f
           // Process the template using underscore
           var processed_template = _.template(template, template_data);
           // Load the compiled HTML into the component
-          insertProcessedTemplate(processed_template, plugin.type, plugin.name);
+          plugin.container = insertProcessedTemplate(processed_template, plugin.type, plugin.name);
+          plugin.template = template;
+          plugin.pluginPath = plugin_path;
           // plugin load done counter
           plugin_count -= 1;
-          plugin.template = template;
           if (plugin_count === 0) {
             addPluginLogic();
             // Trigger done event
