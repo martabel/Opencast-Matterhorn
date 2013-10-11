@@ -39,6 +39,7 @@ define(['require', 'jquery', 'underscore', 'backbone', 'engage/engage_core'], fu
     var VideoDataView = Backbone.View.extend({
         el: $("#engage_video"), // Every view has a element associated with it
         initialize: function(videoDataModel, template, videojs_swf) {
+            this.setElement($(plugin.container)); // Every plugin view has it's own container associated with it
             this.model = videoDataModel;
             this.template = template;
             this.videojs_swf = videojs_swf;
