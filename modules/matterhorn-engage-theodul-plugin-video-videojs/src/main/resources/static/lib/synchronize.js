@@ -67,8 +67,8 @@
         if (id1 && id2) {
             var ct1 = getCurrentTime(id1);
             var ct2 = getCurrentTime(id2);
-            if ((ct1 != -1) && (ct2 != -1) && !isInInterval(ct2, ct1 - 1, ct1 + 1)) { // currentTime in seconds!
-                if (!seek(id2, ct1)) {
+            if ((ct1 != -1) && (ct2 != -1) && !isInInterval(ct2, ct1 - 2, ct1 + 2)) { // currentTime in seconds!
+                if (!seek(id2, ct1 + 1)) { // seek to "+1" because of the video.js buffering
                     pause(id2);
                 }
             }
