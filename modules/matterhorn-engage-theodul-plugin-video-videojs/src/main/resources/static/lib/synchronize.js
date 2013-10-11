@@ -50,6 +50,7 @@
             videojs(id).currentTime(time);
             return true;
         } else {
+            videojs(id).currentTime(getDuration(id));
             return false;
         }
     }
@@ -82,20 +83,28 @@
         });
 
         player_master.on("pause", function() {
-            player_slave.pause();
             synch(videoId1, videoId2);
+            player_slave.pause();
         });
 
         player_master.on("ended", function() {
-            player_slave.pause();
             synch(videoId1, videoId2);
+            player_slave.pause();
+        });
+
+        player_slave.on("ended", function() {
+            player_slave.pause();
         });
 
         player_master.on("timeupdate", function() {
             var now = Date.now();
+            var slave_paused = player_slave.paused();
             if (player_master.paused() || ((now - lastSynch) > synchInterval)) {
                 synch(videoId1, videoId2);
                 lastSynch = now;
+                if (slave_paused) {
+                    player_slave.pause();
+                }
             }
         });
     }
