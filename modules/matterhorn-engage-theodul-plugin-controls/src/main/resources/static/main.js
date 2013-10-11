@@ -31,8 +31,96 @@ define(['require', 'jquery', 'underscore', 'backbone', 'engage/engage_core'], fu
     var isPlaying = false;
     var isSliding = false;
 
+    function disable(id) {
+        $("#" + id).attr("disabled", "disabled");
+    }
+
+    function greyOut(id) {
+        $("#" + id).animate({opacity: 0.5});
+    }
+
+    /**
+     * @description Returns the Input Time in Milliseconds
+     * @param data Data in the Format ab:cd:ef
+     * @return Time from the Data in Milliseconds
+     */
+    function getTimeInMilliseconds(data) {
+        if ((data !== undefined)
+                && (data !== null)
+                && (data != 0)
+                && (data.length)
+                && (data.indexOf(':') != -1)) {
+            var values = data.split(':');
+            // If the Format is correct
+            if (values.length == 3) {
+                // Try to convert to Numbers
+                var val0 = values[0] * 1;
+                var val1 = values[1] * 1;
+                var val2 = values[2] * 1;
+                // Check and parse the Seconds
+                if (!isNaN(val0) && !isNaN(val1) && !isNaN(val2)) {
+                    // Convert Hours, Minutes and Seconds to Milliseconds
+                    val0 *= 60 * 60 * 1000; // 1 Hour = 60 Minutes = 60 * 60 Seconds = 60 * 60 * 1000 Milliseconds
+                    val1 *= 60 * 1000; // 1 Minute = 60 Seconds = 60 * 1000 Milliseconds
+                    val2 *= 1000; // 1 Second = 1000 Milliseconds
+                    // Add the Milliseconds and return it
+                    return val0 + val1 + val2;
+                }
+            }
+        }
+        return 0;
+    }
+
+    /**
+     * @description Returns formatted Seconds
+     * @param seconds Seconds to format
+     * @return formatted Seconds
+     */
+    function formatSeconds(seconds) {
+        if (!seconds) {
+            seconds = 0;
+        }
+        seconds = (seconds < 0) ? 0 : seconds;
+        var result = "";
+        if (parseInt(seconds / 3600) < 10) {
+            result += "0";
+        }
+        result += parseInt(seconds / 3600);
+        result += ":";
+        if ((parseInt(seconds / 60) - parseInt(seconds / 3600) * 60) < 10) {
+            result += "0";
+        }
+        result += parseInt(seconds / 60) - parseInt(seconds / 3600) * 60;
+        result += ":";
+        if (seconds % 60 < 10) {
+            result += "0";
+        }
+        result += seconds % 60;
+        if (result.indexOf(".") != -1) {
+            result = result.substring(0, result.lastIndexOf(".")); // get rid of the .ms
+        }
+        return result;
+    }
+
     //local function
     function initDone() {
+        // disable not used buttons
+        disable("backward_button");
+        disable("forward_button");
+        greyOut("backward_button");
+        greyOut("forward_button");
+        disable("navigation_time");
+        $("#navigation_time_current").keyup(function(e) {
+            // pressed enter
+            if (e.keyCode == 13) {
+                var time = getTimeInMilliseconds($(this).val()) / 1000;
+                var duration = Engage.model.get("videoDataModel").get("duration");
+                if (duration && (time <= duration)) {
+                    var videoDisplay = Engage.model.get("videoDataModel").get("ids")[0];
+                    videojs(videoDisplay).currentTime(time);
+                }
+            }
+        });
 
         $("#slider").slider({
             range: "min",
@@ -47,7 +135,7 @@ define(['require', 'jquery', 'underscore', 'backbone', 'engage/engage_core'], fu
             max: 100,
             value: 100,
             change: function(event, ui) {
-                Engage.trigger("Video:setVolumne", (ui.value) / 100);
+                Engage.trigger("Video:setVolume", (ui.value) / 100);
             }
         });
 
@@ -74,17 +162,45 @@ define(['require', 'jquery', 'underscore', 'backbone', 'engage/engage_core'], fu
             $("#pause_button").hide();
             isPlaying = false;
         });
+
+        $("#fullscreen_button").click(function() {
+            var isInFullScreen = document.fullScreen ||
+                    document.mozFullScreen ||
+                    document.webkitIsFullScreen;
+            // just trigger the go event
+            if (!isInFullScreen) {
+                Engage.trigger("Video:goFullscreen");
+            }
+        });
+        Engage.on("Video:fullscreenChange", function() {
+            var isInFullScreen = document.fullScreen ||
+                    document.mozFullScreen ||
+                    document.webkitIsFullScreen;
+            // just trigger the cancel event
+            if (!isInFullScreen) {
+                Engage.trigger("Video:cancelFullscreen");
+            }
+        });
+
         Engage.on("Video:timeupdate", function(currentTime) {
+            // set slider
             var duration = Engage.model.get("videoDataModel").get("duration");
-            if (!isSliding) {
+            if (!isSliding && duration) {
                 var normTime = (currentTime / (duration / 1000)) * 1000;
                 $("#slider").slider("option", "value", normTime);
+            }
+            // set time
+            $("#navigation_time_current").val(formatSeconds(currentTime));
+        });
+
+        Engage.model.on("change:videoDataModel", function() {
+            var duration = Engage.model.get("videoDataModel").get("duration");
+            if (duration) {
+                $("#navigation_time_duration").html(formatSeconds(duration / 1000));
             }
         });
 
         // slider events
-        // $("#slider").on("slide", function(event, ui) {});
-        // $("#slider").on("slidechange", function(event, ui) {});
         $("#slider").on("slidestart", function(event, ui) {
             isSliding = true;
             Engage.trigger("Slider:start", ui.value);
@@ -94,6 +210,7 @@ define(['require', 'jquery', 'underscore', 'backbone', 'engage/engage_core'], fu
             Engage.trigger("Slider:stop", ui.value);
         });
     }
+
     //local logic
 
     //Init Event

@@ -36,13 +36,12 @@ define(['require', 'jquery', 'underscore', 'backbone', 'engage/engage_core'], fu
     var videoPosterClass = ".vjs-poster";
     var initCount = 4;
 
-    var videojs_swf;
-
     var VideoDataView = Backbone.View.extend({
         el: $("#engage_video"), // Every view has a element associated with it
-        initialize: function(videoDataModel, template) {
+        initialize: function(videoDataModel, template, videojs_swf) {
             this.model = videoDataModel;
             this.template = template;
+            this.videojs_swf = videojs_swf;
             //bound the render function always to the view
             _.bindAll(this, "render");
             //listen for changes of the model and bind the render function to this
@@ -62,7 +61,7 @@ define(['require', 'jquery', 'underscore', 'backbone', 'engage/engage_core'], fu
             var videoSources = this.model.get("videoSources");
             for (var v in videoSources) {
                 if (videoSources[v].length > 0) {
-                    initVideojsVideo(videoDisplays[i], videoSources[v]);
+                    initVideojsVideo(videoDisplays[i], videoSources[v], this.videojs_swf);
                 }
                 ++i;
             }
@@ -71,7 +70,7 @@ define(['require', 'jquery', 'underscore', 'backbone', 'engage/engage_core'], fu
 
             if (videoDisplays.length > 0) {
                 // set first videoDisplay as master
-                registerEvents(videojs(videoDisplays[0]));
+                registerEvents(videoDisplays[0]);
 
                 var nr = 0;
                 for (var v in videoSources) {
@@ -108,7 +107,7 @@ define(['require', 'jquery', 'underscore', 'backbone', 'engage/engage_core'], fu
         }
     });
 
-    function initVideojsVideo(id, videoSource) {
+    function initVideojsVideo(id, videoSource, videojs_swf) {
         Engage.log("Initializing video.js-display: " + id);
 
         var videoOptions = {
@@ -136,7 +135,8 @@ define(['require', 'jquery', 'underscore', 'backbone', 'engage/engage_core'], fu
         }
     }
 
-    function registerEvents(theodulVideodisplay) {
+    function registerEvents(videoDisplay) {
+        var theodulVideodisplay = videojs(videoDisplay);
         Engage.on("Video:play", function() {
             theodulVideodisplay.play();
         });
@@ -147,9 +147,11 @@ define(['require', 'jquery', 'underscore', 'backbone', 'engage/engage_core'], fu
             theodulVideodisplay.pause();
         });
         Engage.on("Video:goFullscreen", function() {
+            $("#" + videoDisplay).removeClass("vjs-controls-disabled").addClass("vjs-controls-enabled");
             theodulVideodisplay.requestFullScreen();
         });
         Engage.on("Video:cancelFullscreen", function() {
+            $("#" + videoDisplay).removeClass("vjs-controls-enabled").addClass("vjs-controls-disabled");
             theodulVideodisplay.cancelFullScreen();
         });
         Engage.on("Video:setVolume", function(percentAsDecimal) {
@@ -169,95 +171,98 @@ define(['require', 'jquery', 'underscore', 'backbone', 'engage/engage_core'], fu
         theodulVideodisplay.on("volumechange", function() {
             Engage.trigger("Video:volumechange", theodulVideodisplay.volume());
         });
+        theodulVideodisplay.on("fullscreenchange", function() {
+            Engage.trigger("Video:fullscreenChange");
+        });
     }
 
     function initPlugin() {
-      //set path to swf player
-      videojs_swf = plugin.pluginPath + "/lib/videojs/video-js.swf";
-      
-      Engage.model.on("change:videoDataModel", function() {
-          new VideoDataView(this.get("videoDataModel"), plugin.template);
-      });
-      Engage.model.get("mediaPackage").on("change", function() {
-          var mediaInfo = {};
-          mediaInfo.tracks = this.get("tracks");
-          mediaInfo.attachments = this.get("attachments");
-  
-          if ((mediaInfo.tracks.length > 0) && (mediaInfo.attachments.length > 0)) {
-              var videoDisplays = [];
-              var videoSources = [];
-              videoSources.presenter = [];
-              videoSources.presentation = [];
-  
-              // look for video source
-              var duration = 0;
-              if (mediaInfo.tracks) {
-                  $(mediaInfo.tracks).each(function(i, track) {
-                      if (track.mimetype
-                              && track.type
-                              && track.mimetype.match(/video/g)) {
-                          // filter for different video sources
-                          if (track.type.match(/presenter/g)) {
-                              if (track.duration > duration) {
-                                  duration = track.duration;
-                              }
-                              videoSources.presenter.push({
-                                  src: track.url,
-                                  type: track.mimetype,
-                                  typemh: track.type
-                              });
-                          } else if (track.type.match(/presentation/g)) {
-                              if (track.duration > duration) {
-                                  duration = track.duration;
-                              }
-                              videoSources.presentation.push({
-                                  src: track.url,
-                                  type: track.mimetype,
-                                  typemh: track.type
-                              });
-                          }
-                      }
-                  });
-              }
-              if (mediaInfo.attachments) {
-                  $(mediaInfo.attachments).each(function(i, attachment) {
-                      if (attachment.mimetype
-                              && attachment.type
-                              && attachment.mimetype.match(/image/g)
-                              && attachment.type.match(/player/g)) {
-                          // filter for different video sources
-                          if (attachment.type.match(/presenter/g)) {
-                              videoSources.presenter.poster = attachment.url;
-                          }
-                          if (attachment.type.match(/presentation/g)) {
-                              videoSources.presentation.poster = attachment.url;
-                          }
-                      }
-                  });
-              }
-              var i = 0;
-              for (var v in videoSources) {
-                  if (videoSources[v].length > 0) {
-                      var name = videoDisplayNamePrefix.concat(i);
-                      videoDisplays.push(name);
-                  }
-                  ++i;
-              }
-              Engage.model.set("videoDataModel", new VideoDataModel(videoDisplays, videoSources, duration));
-          }
-      });
-      
+        // set path to swf player
+        var videojs_swf = plugin.pluginPath + "/lib/videojs/video-js.swf";
+
+        Engage.model.on("change:videoDataModel", function() {
+            new VideoDataView(this.get("videoDataModel"), plugin.template, videojs_swf);
+        });
+        Engage.model.get("mediaPackage").on("change", function() {
+            var mediaInfo = {};
+            mediaInfo.tracks = this.get("tracks");
+            mediaInfo.attachments = this.get("attachments");
+
+            if ((mediaInfo.tracks.length > 0) && (mediaInfo.attachments.length > 0)) {
+                var videoDisplays = [];
+                var videoSources = [];
+                videoSources.presenter = [];
+                videoSources.presentation = [];
+
+                // look for video source
+                var duration = 0;
+                if (mediaInfo.tracks) {
+                    $(mediaInfo.tracks).each(function(i, track) {
+                        if (track.mimetype
+                                && track.type
+                                && track.mimetype.match(/video/g)) {
+                            // filter for different video sources
+                            if (track.type.match(/presenter/g)) {
+                                if (track.duration > duration) {
+                                    duration = track.duration;
+                                }
+                                videoSources.presenter.push({
+                                    src: track.url,
+                                    type: track.mimetype,
+                                    typemh: track.type
+                                });
+                            } else if (track.type.match(/presentation/g)) {
+                                if (track.duration > duration) {
+                                    duration = track.duration;
+                                }
+                                videoSources.presentation.push({
+                                    src: track.url,
+                                    type: track.mimetype,
+                                    typemh: track.type
+                                });
+                            }
+                        }
+                    });
+                }
+                if (mediaInfo.attachments) {
+                    $(mediaInfo.attachments).each(function(i, attachment) {
+                        if (attachment.mimetype
+                                && attachment.type
+                                && attachment.mimetype.match(/image/g)
+                                && attachment.type.match(/player/g)) {
+                            // filter for different video sources
+                            if (attachment.type.match(/presenter/g)) {
+                                videoSources.presenter.poster = attachment.url;
+                            }
+                            if (attachment.type.match(/presentation/g)) {
+                                videoSources.presentation.poster = attachment.url;
+                            }
+                        }
+                    });
+                }
+                var i = 0;
+                for (var v in videoSources) {
+                    if (videoSources[v].length > 0) {
+                        var name = videoDisplayNamePrefix.concat(i);
+                        videoDisplays.push(name);
+                    }
+                    ++i;
+                }
+                Engage.model.set("videoDataModel", new VideoDataModel(videoDisplays, videoSources, duration));
+            }
+        });
+
     }
     // init Event
     Engage.log("Video:init");
 
     Engage.model.on("change:mediaPackage", function() { // listen on a change/set of the mediaPackage model
-      initCount -= 1;
-      if (initCount === 0) {
-          initPlugin();
-      }
+        initCount -= 1;
+        if (initCount === 0) {
+            initPlugin();
+        }
     });
-    
+
     // load video.js lib
     require(["./lib/videojs/video.js"], function(videojs) {
         Engage.log("Video: Load video.js done");
