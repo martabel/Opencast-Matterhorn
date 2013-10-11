@@ -31,7 +31,7 @@ define(['require', 'jquery', 'underscore', 'backbone', 'engage/engage_core'], fu
     };
     //privates //
 
-    var initCount = 2; //wait for two inits, moment lib and plugin load done
+    var initCount = 3; //wait for three inits, moment lib, plugin load done and mediapackage
 
     // view //
 
@@ -61,27 +61,19 @@ define(['require', 'jquery', 'underscore', 'backbone', 'engage/engage_core'], fu
         }
     });
 
-    // model listener //
-
-    Engage.model.on("change:mediaPackage", function() { // listen on a change/set of the mediaPackage model
-        //create a new view with the media package model and the template
-        new DescriptionView(this.get("mediaPackage"), plugin.template);
-        /*//Example how get a property of a model
-         this.get("mediaPackage").on("change:title", function(){ 
-         Engage.log("media title changed");
-         //insert titel
-         $("#engage_basic_description_title").html(this.get("title"));
-         });
-         */
-    });
-
-    //functions
     function initPlugin() {
-        //do some init stuff
+      //create a new view with the media package model and the template
+      new DescriptionView(Engage.model.get("mediaPackage"), plugin.template);
     }
 
     //inits
     Engage.log("Description: init");
+    Engage.model.on("change:mediaPackage", function() { // listen on a change/set of the mediaPackage model
+      initCount -= 1;
+      if (initCount === 0) {
+          initPlugin();
+      }
+    });
     // Load moment.js lib
     require(["./lib/moment.min.js"], function(momentjs) {
         Engage.log("Description: load moment.min.js done");
