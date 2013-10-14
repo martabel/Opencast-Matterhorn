@@ -32,12 +32,14 @@ define(['require', 'jquery', 'underscore', 'backbone', 'engage/engage_core'], fu
         styles: PLUGIN_STYLES,
         template: PLUGIN_TEMPLATE
     };
-    var videoDisplayNamePrefix = "videojs_videodisplay_";
-    var videoPosterClass = ".vjs-poster";
     var initCount = 4;
+    var videoDisplayNamePrefix = "videojs_videodisplay_";
+    var class_vjsposter = "vjs-poster";
+    var id_engage_video = "engage_video";
+    var id_videojs_wrapper = "videojs_wrapper";
 
     var VideoDataView = Backbone.View.extend({
-        el: $("#engage_video"), // every view has an element associated with it
+        el: $("#" + id_engage_video), // every view has an element associated with it
         initialize: function(videoDataModel, template, videojs_swf) {
             this.setElement($(plugin.container)); // every plugin view has it's own container associated with it
             this.model = videoDataModel;
@@ -60,7 +62,6 @@ define(['require', 'jquery', 'underscore', 'backbone', 'engage/engage_core'], fu
             var i = 0;
             var videoDisplays = this.model.get("ids");
             var videoSources = this.model.get("videoSources");
-            Engage.log(videoDisplays);
             for (var v in videoSources) {
                 if (videoSources[v].length > 0) {
                     initVideojsVideo(videoDisplays[i], videoSources[v], this.videojs_swf);
@@ -68,7 +69,7 @@ define(['require', 'jquery', 'underscore', 'backbone', 'engage/engage_core'], fu
                 }
             }
             // small hack for the posters: A poster is only being displayed when controls=true, so do it manually
-            $(videoPosterClass).show();
+            $("." + class_vjsposter).show();
 
             if (videoDisplays.length > 0) {
                 // set first videoDisplay as master
@@ -141,11 +142,11 @@ define(['require', 'jquery', 'underscore', 'backbone', 'engage/engage_core'], fu
                 }
             } else {
                 Engage.log("Error: No video source available");
-                $("#videojs_wrapper").html("No video sources available.");
+                $("#" + id_videojs_wrapper).html("No video sources available.");
             }
         } else {
             Engage.log("Error: No ID available");
-            $("#videojs_wrapper").html("No video available.");
+            $("#" + id_videojs_wrapper).html("No video available.");
         }
     }
 

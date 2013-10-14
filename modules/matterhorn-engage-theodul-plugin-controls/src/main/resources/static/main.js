@@ -40,8 +40,26 @@ define(['require', 'jquery', 'underscore', 'backbone', 'engage/engage_core'], fu
     var isSliding = false;
     var isMuted = false;
 
+    var class_expand_button = "expand_button";
+    var class_expanded_content = "expanded_content";
+    var class_pulldown_image = "pulldown_image";
+    var id_engage_controls = "engage_controls";
+    var id_slider = "slider";
+    var id_volume = "volume";
+    var id_volumeIcon = "volumeIcon";
+    var id_playpause_controls = "playpause_controls";
+    var id_fullscreen_button = "fullscreen_button";
+    var id_backward_button = "backward_button";
+    var id_forward_button = "forward_button";
+    var id_navigation_time = "navigation_time";
+    var id_navigation_time_current = "navigation_time_current";
+    var id_play_button = "play_button";
+    var id_pause_button = "pause_button";
+    var id_unmuted_button = "unmuted_button";
+    var id_muted_button = "muted_button";
+
     var ControlsView = Backbone.View.extend({
-        el: $("#engage_controls"), // every view has an element associated with it
+        el: $("#" + id_engage_controls), // every view has an element associated with it
         initialize: function(controlsModel, template, plugin_path) {
             this.setElement($(plugin.container)); // every plugin view has it's own container associated with it
             this.model = controlsModel;
@@ -150,12 +168,12 @@ define(['require', 'jquery', 'underscore', 'backbone', 'engage/engage_core'], fu
 
     function initControlsEvents() {
         // disable not used buttons
-        disable("backward_button");
-        disable("forward_button");
-        greyOut("backward_button");
-        greyOut("forward_button");
-        disable("navigation_time");
-        $("#navigation_time_current").keyup(function(e) {
+        disable(id_backward_button);
+        disable(id_forward_button);
+        greyOut(id_backward_button);
+        greyOut(id_forward_button);
+        disable(id_navigation_time);
+        $("#" + id_navigation_time_current).keyup(function(e) {
             // pressed enter
             if (e.keyCode == 13) {
                 var time = getTimeInMilliseconds($(this).val()) / 1000;
@@ -167,14 +185,14 @@ define(['require', 'jquery', 'underscore', 'backbone', 'engage/engage_core'], fu
             }
         });
 
-        $("#slider").slider({
+        $("#" + id_slider).slider({
             range: "min",
             min: 0,
             max: 1000,
             value: 0
         });
 
-        $("#volume").slider({
+        $("#" + id_volume).slider({
             range: "min",
             min: 1,
             max: 100,
@@ -184,15 +202,7 @@ define(['require', 'jquery', 'underscore', 'backbone', 'engage/engage_core'], fu
             }
         });
 
-        $("#playpause_controls").click(function() {
-            if (isPlaying) {
-                Engage.trigger("Video:pause");
-            } else {
-                Engage.trigger("Video:play");
-            }
-        });
-
-        $("#volumeIcon").click(function() {
+        $("#" + id_volumeIcon).click(function() {
             if (isMuted) {
                 Engage.trigger("Video:unmuted");
             } else {
@@ -200,12 +210,20 @@ define(['require', 'jquery', 'underscore', 'backbone', 'engage/engage_core'], fu
             }
         });
 
-        $(".expand_button").click(function() {
-            $(".expanded_content").slideToggle("fast");
-            $(".pulldown_image").toggleClass("rotate180");
+        $("#" + id_playpause_controls).click(function() {
+            if (isPlaying) {
+                Engage.trigger("Video:pause");
+            } else {
+                Engage.trigger("Video:play");
+            }
         });
 
-        $("#fullscreen_button").click(function() {
+        $("." + class_expand_button).click(function() {
+            $("." + class_expanded_content).slideToggle("fast");
+            $("." + class_pulldown_image).toggleClass("rotate180");
+        });
+
+        $("#" + id_fullscreen_button).click(function() {
             var isInFullScreen = document.fullScreen ||
                     document.mozFullScreen ||
                     document.webkitIsFullScreen;
@@ -216,15 +234,15 @@ define(['require', 'jquery', 'underscore', 'backbone', 'engage/engage_core'], fu
         });
 
         // slider events
-        $("#slider").on("slidestart", function(event, ui) {
+        $("#" + id_slider).on("slidestart", function(event, ui) {
             isSliding = true;
             Engage.trigger("Slider:start", ui.value);
         });
-        $("#slider").on("slidestop", function(event, ui) {
+        $("#" + id_slider).on("slidestop", function(event, ui) {
             isSliding = false;
             Engage.trigger("Slider:stop", ui.value);
         });
-        $("#volume").on("slidestop", function(event, ui) {
+        $("#" + id_volume).on("slidestop", function(event, ui) {
             Engage.trigger("Video:unmuted");
         });
     }
@@ -233,7 +251,7 @@ define(['require', 'jquery', 'underscore', 'backbone', 'engage/engage_core'], fu
         if (isMuted) {
             return 0;
         } else {
-            var vol = $("#volume").slider("option", "value");
+            var vol = $("#" + id_volume).slider("option", "value");
             return vol;
         }
     }
@@ -248,24 +266,24 @@ define(['require', 'jquery', 'underscore', 'backbone', 'engage/engage_core'], fu
         });
 
         Engage.on("Video:play", function() {
-            $("#play_button").hide();
-            $("#pause_button").show();
+            $("#" + id_play_button).hide();
+            $("#" + id_pause_button).show();
             isPlaying = true;
         });
         Engage.on("Video:pause", function() {
-            $("#play_button").show();
-            $("#pause_button").hide();
+            $("#" + id_play_button).show();
+            $("#" + id_pause_button).hide();
             isPlaying = false;
         });
         Engage.on("Video:muted", function() {
-            $("#unmuted_button").hide();
-            $("#muted_button").show();
+            $("#" + id_unmuted_button).hide();
+            $("#" + id_muted_button).show();
             isMuted = true;
             Engage.trigger("Video:setVolume", 0);
         });
         Engage.on("Video:unmuted", function() {
-            $("#unmuted_button").show();
-            $("#muted_button").hide();
+            $("#" + id_unmuted_button).show();
+            $("#" + id_muted_button).hide();
             isMuted = false;
             Engage.trigger("Video:setVolume", getVolume());
         });
@@ -278,19 +296,17 @@ define(['require', 'jquery', 'underscore', 'backbone', 'engage/engage_core'], fu
                 Engage.trigger("Video:cancelFullscreen");
             }
         });
+
         Engage.on("Video:timeupdate", function(currentTime) {
             // set slider
             var duration = Engage.model.get("controlsModel").get("duration");
             if (!isSliding && duration) {
                 var normTime = (currentTime / (duration / 1000)) * 1000;
-                $("#slider").slider("option", "value", normTime);
-            }
-            if (!$("#navigation_time_current").is(":focus")) {
-                // set time
-                $("#navigation_time_current").val(formatSeconds(currentTime));
-            }
-            if (!isPlaying) {
-                Engage.trigger("Video:pause");
+                $("#" + id_slider).slider("option", "value", normTime);
+                if (!$("#" + id_navigation_time_current).is(":focus")) {
+                    // set time
+                    $("#" + id_navigation_time_current).val(formatSeconds(currentTime));
+                }
             }
         });
         Engage.on("Video:ended", function() {

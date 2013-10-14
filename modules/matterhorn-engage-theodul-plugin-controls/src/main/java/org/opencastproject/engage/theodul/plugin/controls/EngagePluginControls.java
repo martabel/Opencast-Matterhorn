@@ -13,7 +13,7 @@
  *  permissions and limitations under the License.
  *
  */
-package org.opencastproject.engage.theodul.plugin.description.mockup;
+package org.opencastproject.engage.theodul.plugin.controls;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -25,9 +25,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Path("/")
-public class EngagePluginDescriptionMockup extends AbstractEngagePlugin {
+public class EngagePluginControls extends AbstractEngagePlugin {
 
-  private static final Logger log = LoggerFactory.getLogger(EngagePluginDescriptionMockup.class);
+  private static final Logger log = LoggerFactory.getLogger(EngagePluginControls.class);
   
   protected void activate(ComponentContext cc) {
     log.info("Activated.");
@@ -37,6 +37,6 @@ public class EngagePluginDescriptionMockup extends AbstractEngagePlugin {
   @Path("sayhello")
   @Produces(MediaType.TEXT_PLAIN)
   public String sayHello() {
-    return "Bilbos Schatz!";
+    return "Hi-didly-doh, neighbourino!";
   }*/
 }

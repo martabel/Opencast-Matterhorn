@@ -3,9 +3,9 @@
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.opencastproject</groupId>
-  <artifactId>matterhorn-engage-theodul-plugin-description-mockup</artifactId>
+  <artifactId>matterhorn-engage-theodul-plugin-description</artifactId>
   <packaging>bundle</packaging>
-  <name>matterhorn-engage-theodul-plugin-description-mockup</name>
+  <name>matterhorn-engage-theodul-plugin-description</name>
 
   <parent>
     <groupId>org.opencastproject</groupId>
@@ -73,7 +73,7 @@
         <configuration>
           <instructions>
             <Bundle-SymbolicName> ${project.artifactId} </Bundle-SymbolicName>
-            <Export-Package> org.opencastproject.engage.theodul.plugin.description.mockup;version=${project.version} </Export-Package>
+            <Export-Package> org.opencastproject.engage.theodul.plugin.description;version=${project.version} </Export-Package>
             <Import-Package>
                org.opencastproject.engage.theodul.api;version=${project.version},
               *;resolution:=optional

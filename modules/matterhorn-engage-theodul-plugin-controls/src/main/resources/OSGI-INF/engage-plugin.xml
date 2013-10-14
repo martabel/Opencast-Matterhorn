@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.1.0"
- name="org.opencastproject.engage.theodul.plugin.controls.mockup" 
+ name="org.opencastproject.engage.theodul.plugin.controls" 
  immediate="true"
  activate="activate">
-  <implementation class="org.opencastproject.engage.theodul.plugin.controls.mockup.EngagePluginControlsMockup" />
+  <implementation class="org.opencastproject.engage.theodul.plugin.controls.EngagePluginControls" />
   
   <!-- Engage Plugin Properties: at least name and path must be set -->
-  <property name="opencast.engage.plugin.name" value="EngagePluginControlsMockup" />
+  <property name="opencast.engage.plugin.name" value="EngagePluginControls" />
   <property name="opencast.engage.plugin.description" value="Simple implementation of a control bar" />
   <property name="opencast.engage.plugin.rest" value="false" />
   

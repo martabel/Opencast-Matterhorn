@@ -32,11 +32,12 @@ define(['require', 'jquery', 'underscore', 'backbone', 'engage/engage_core'], fu
     //privates //
 
     var initCount = 3; //wait for three inits, moment lib, plugin load done and mediapackage
+    var id_engage_description = "engage_description";
 
     // view //
 
     var DescriptionView = Backbone.View.extend({
-        el: $("#engage_description"), // Every view has a element associated with it
+        el: $("#" + id_engage_description), // Every view has a element associated with it
         initialize: function(mediaPackageModel, template) {
             this.model = mediaPackageModel;
             this.template = template;
@@ -62,17 +63,17 @@ define(['require', 'jquery', 'underscore', 'backbone', 'engage/engage_core'], fu
     });
 
     function initPlugin() {
-      //create a new view with the media package model and the template
-      new DescriptionView(Engage.model.get("mediaPackage"), plugin.template);
+        //create a new view with the media package model and the template
+        new DescriptionView(Engage.model.get("mediaPackage"), plugin.template);
     }
 
     //inits
     Engage.log("Description: init");
     Engage.model.on("change:mediaPackage", function() { // listen on a change/set of the mediaPackage model
-      initCount -= 1;
-      if (initCount === 0) {
-          initPlugin();
-      }
+        initCount -= 1;
+        if (initCount === 0) {
+            initPlugin();
+        }
     });
     // Load moment.js lib
     require(["./lib/moment.min.js"], function(momentjs) {
