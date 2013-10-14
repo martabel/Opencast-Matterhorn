@@ -14,19 +14,29 @@
     </div>
 
     <div id="volume"></div>
-    <div class="volume_icon">
-        <img src="<%= plugin_path %>/images/volume.png" />
+    <div class="volume_icon" id="volumeIcon">
+        <img id="unmuted_button" class="mute_btn" src="<%= plugin_path %>/images/volume.png" />
+        <img id="muted_button" class="mute_btn" style="display: none;" src="<%= plugin_path %>/images/volumeMuted.png" /> 
     </div>
 
     <div id="navigation_time">
+        <% if((typeof startTime !== "undefined") && (typeof duration !== "undefined")) { %>
+        <input id="navigation_time_current" type="text" value="<%= startTime %>" /><span> / <span id="navigation_time_duration"><%= duration %></span></span>
+        <% } else { %>
         <input id="navigation_time_current" type="text" value="00:00:00" /><span> / <span id="navigation_time_duration">00:00:00</span></span>
+        <% } %>
     </div>
 
     <!-- ##### Logo ##### -->
 
     <div id="navigation_logo">
-        <a href="#"> <img src="<%= plugin_path %>/images/logo.png" />
+        <% if(typeof logoLink !== "undefined") { %>
+        <a href="<%= logoLink %>">
+            <% } %>
+            <img src="<%= plugin_path %>/images/logo.png" />
+            <% if(typeof logoLink !== "undefined") { %>
         </a>
+        <% } %>
     </div>
 
     <!-- ##### Navigation ##### -->

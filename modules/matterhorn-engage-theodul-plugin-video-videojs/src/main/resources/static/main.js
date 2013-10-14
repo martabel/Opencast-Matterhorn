@@ -37,15 +37,15 @@ define(['require', 'jquery', 'underscore', 'backbone', 'engage/engage_core'], fu
     var initCount = 4;
 
     var VideoDataView = Backbone.View.extend({
-        el: $("#engage_video"), // Every view has a element associated with it
+        el: $("#engage_video"), // every view has an element associated with it
         initialize: function(videoDataModel, template, videojs_swf) {
-            this.setElement($(plugin.container)); // Every plugin view has it's own container associated with it
+            this.setElement($(plugin.container)); // every plugin view has it's own container associated with it
             this.model = videoDataModel;
             this.template = template;
             this.videojs_swf = videojs_swf;
-            //bound the render function always to the view
+            // bind the render function always to the view
             _.bindAll(this, "render");
-            //listen for changes of the model and bind the render function to this
+            // listen for changes of the model and bind the render function to this
             this.model.bind("change", this.render);
             this.render();
         },
@@ -116,7 +116,7 @@ define(['require', 'jquery', 'underscore', 'backbone', 'engage/engage_core'], fu
             "autoplay": false,
             "preload": "auto",
             "poster": videoSource.poster,
-            "loop": "false",
+            "loop": false,
             "width": 640,
             "height": 480
         };
@@ -140,9 +140,6 @@ define(['require', 'jquery', 'underscore', 'backbone', 'engage/engage_core'], fu
         var theodulVideodisplay = videojs(videoDisplay);
         Engage.on("Video:play", function() {
             theodulVideodisplay.play();
-        });
-        Engage.on("Video:stop", function() {
-            theodulVideodisplay.stop();
         });
         Engage.on("Video:pause", function() {
             theodulVideodisplay.pause();
@@ -174,6 +171,11 @@ define(['require', 'jquery', 'underscore', 'backbone', 'engage/engage_core'], fu
         });
         theodulVideodisplay.on("fullscreenchange", function() {
             Engage.trigger("Video:fullscreenChange");
+        });
+        theodulVideodisplay.on("ended", function() {
+            Engage.trigger("Video:ended");
+            theodulVideodisplay.pause();
+            theodulVideodisplay.currentTime(theodulVideodisplay.duration());
         });
     }
 
@@ -252,8 +254,8 @@ define(['require', 'jquery', 'underscore', 'backbone', 'engage/engage_core'], fu
                 Engage.model.set("videoDataModel", new VideoDataModel(videoDisplays, videoSources, duration));
             }
         });
-
     }
+
     // init Event
     Engage.log("Video:init");
 
