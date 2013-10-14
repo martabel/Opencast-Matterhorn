@@ -6,7 +6,7 @@
         <% if(typeof creator !== "undefined" ){ %>
         <div id="engage_basic_description_creator" class="engage_basic_description_wrap"><%= creator %></div>
         <% } %>
-        <% if((typeof creator !== "undefined" ) && (typeof date !== "undefined" )) { %>
+        <% if((typeof creator !== "undefined" ) && (typeof date !== "undefined" ) && (creator !== "")) { %>
         <div class="engage_basic_description_wrap">, &nbsp;</div>
         <% } %>
         <% if(typeof date !== "undefined" ){ %>

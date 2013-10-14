@@ -60,11 +60,12 @@ define(['require', 'jquery', 'underscore', 'backbone', 'engage/engage_core'], fu
             var i = 0;
             var videoDisplays = this.model.get("ids");
             var videoSources = this.model.get("videoSources");
+            Engage.log(videoDisplays);
             for (var v in videoSources) {
                 if (videoSources[v].length > 0) {
                     initVideojsVideo(videoDisplays[i], videoSources[v], this.videojs_swf);
+                    ++i;
                 }
-                ++i;
             }
             // small hack for the posters: A poster is only being displayed when controls=true, so do it manually
             $(videoPosterClass).show();
@@ -110,29 +111,41 @@ define(['require', 'jquery', 'underscore', 'backbone', 'engage/engage_core'], fu
 
     function initVideojsVideo(id, videoSource, videojs_swf) {
         Engage.log("Initializing video.js-display: " + id);
+        Engage.log("Initializing video source: ");
+        Engage.log(videoSource);
 
-        var videoOptions = {
-            "controls": false,
-            "autoplay": false,
-            "preload": "auto",
-            "poster": videoSource.poster,
-            "loop": false,
-            "width": 640,
-            "height": 480
-        };
+        if (id) {
+            if (videoSource) {
+                var videoOptions = {
+                    "controls": false,
+                    "autoplay": false,
+                    "preload": "auto",
+                    "poster": videoSource.poster,
+                    "loop": false,
+                    "width": 640,
+                    "height": 480
+                };
 
-        // init videoJS
-        videojs(id, videoOptions, function() {
-            var theodulVideodisplay = this;
-            // set sources
-            theodulVideodisplay.src(videoSource);
-        });
-        // URL to the Flash SWF
-        if (videojs_swf) {
-            Engage.log("Loaded flash component");
-            videojs.options.flash.swf = videojs_swf;
+                // init videoJS
+                videojs(id, videoOptions, function() {
+                    var theodulVideodisplay = this;
+                    // set sources
+                    theodulVideodisplay.src(videoSource);
+                });
+                // URL to the Flash SWF
+                if (videojs_swf) {
+                    Engage.log("Loaded flash component");
+                    videojs.options.flash.swf = videojs_swf;
+                } else {
+                    Engage.log("No flash component loaded");
+                }
+            } else {
+                Engage.log("Error: No video source available");
+                $("#videojs_wrapper").html("No video sources available.");
+            }
         } else {
-            Engage.log("No flash component loaded");
+            Engage.log("Error: No ID available");
+            $("#videojs_wrapper").html("No video available.");
         }
     }
 
@@ -248,8 +261,8 @@ define(['require', 'jquery', 'underscore', 'backbone', 'engage/engage_core'], fu
                     if (videoSources[v].length > 0) {
                         var name = videoDisplayNamePrefix.concat(i);
                         videoDisplays.push(name);
+                        ++i;
                     }
-                    ++i;
                 }
                 Engage.model.set("videoDataModel", new VideoDataModel(videoDisplays, videoSources, duration));
             }
