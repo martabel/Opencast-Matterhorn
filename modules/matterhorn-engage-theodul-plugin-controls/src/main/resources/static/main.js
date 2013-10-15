@@ -35,7 +35,7 @@ define(['require', 'jquery', 'underscore', 'backbone', 'engage/engage_core'], fu
         template: PLUGIN_TEMPLATE
     };
 
-    var initCount = 3; //init resource count
+    var initCount = 4; //init resource count
     var isPlaying = false;
     var isSliding = false;
     var isMuted = false;
@@ -60,9 +60,9 @@ define(['require', 'jquery', 'underscore', 'backbone', 'engage/engage_core'], fu
 
     var ControlsView = Backbone.View.extend({
         el: $("#" + id_engage_controls), // every view has an element associated with it
-        initialize: function(controlsModel, template, plugin_path) {
+        initialize: function(videoDataModel, template, plugin_path) {
             this.setElement($(plugin.container)); // every plugin view has it's own container associated with it
-            this.model = controlsModel;
+            this.model = videoDataModel;
             this.template = template;
             this.pluginPath = plugin_path;
             // bind the render function always to the view
@@ -83,15 +83,6 @@ define(['require', 'jquery', 'underscore', 'backbone', 'engage/engage_core'], fu
             // compile template and load into the html
             this.$el.html(_.template(this.template, tempVars));
             initControlsEvents();
-        }
-    });
-
-    var ControlsModel = Backbone.Model.extend({
-        initialize: function(duration) {
-            Engage.log("Video: Init ControlsModel");
-            this.attributes.duration = duration;
-        },
-        defaults: {
         }
     });
 
@@ -258,12 +249,8 @@ define(['require', 'jquery', 'underscore', 'backbone', 'engage/engage_core'], fu
 
     //local function
     function initPlugin() {
-        Engage.model.on("change:controlsModel", function() {
-            new ControlsView(this.get("controlsModel"), plugin.template, plugin.pluginPath);
-        });
-        Engage.model.on("change:videoDataModel", function() {
-            Engage.model.set("controlsModel", new ControlsModel(Engage.model.get("videoDataModel").get("duration")));
-        });
+
+      new ControlsView(Engage.model.get("videoDataModel"), plugin.template, plugin.pluginPath);
 
         Engage.on("Video:play", function() {
             $("#" + id_play_button).hide();
@@ -299,7 +286,7 @@ define(['require', 'jquery', 'underscore', 'backbone', 'engage/engage_core'], fu
 
         Engage.on("Video:timeupdate", function(currentTime) {
             // set slider
-            var duration = Engage.model.get("controlsModel").get("duration");
+            var duration = Engage.model.get("videoDataModel").get("duration");
             if (!isSliding && duration) {
                 var normTime = (currentTime / (duration / 1000)) * 1000;
                 $("#" + id_slider).slider("option", "value", normTime);
@@ -331,6 +318,13 @@ define(['require', 'jquery', 'underscore', 'backbone', 'engage/engage_core'], fu
         if (initCount === 0) {
             initPlugin();
         }
+    });
+    
+    Engage.model.on("change:videoDataModel", function() {
+      initCount -= 1;
+      if (initCount === 0) {
+          initPlugin();
+      }      
     });
 
     //All plugins loaded lets do some stuff
