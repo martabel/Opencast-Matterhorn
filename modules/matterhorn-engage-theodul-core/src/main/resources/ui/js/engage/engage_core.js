@@ -28,6 +28,32 @@ define(['require', 'jquery', 'underscore', 'backbone', 'engage/engage_model'], f
     console.log("Core: Init");
   }
 
+  //Event prototype
+  function EngageEvent(name, description, type){
+    var name = name;
+    var description = description;
+    var type = type;
+    
+    this.getName = (function(){
+      return name;
+    });
+    
+    this.getDescription = (function(){
+      return description;
+    });
+    
+    this.getType = (function(){
+      return type;
+    });
+    
+    this.toString = (function(){
+      return name;
+    });
+  }
+  
+  //TEST
+  console.log((new Event("video:play", "play event of the videodisplay")).toString());
+  
   /*
    * Main core
    */ 
@@ -35,13 +61,13 @@ define(['require', 'jquery', 'underscore', 'backbone', 'engage/engage_model'], f
     el : $("#engage_view"),
     initialize : function () {
       // The main core is our global event system
-      _.extend(this, Backbone.Events);
+      this.dispatcher = _.clone(Backbone.Events);
       //link to the engage model
       this.model = new EngageModel();
       // load Stream Event
-      this.on("Core:init", function () {
+      this.dispatcher.on("Core:init", function () {
         // fetch plugin information
-        this.model.get('pluginsInfo').fetch({
+        engageCore.model.get('pluginsInfo').fetch({
           success : function (pluginInfos) {
             // load plugin as requirejs module
             if (pluginInfos.get('pluginlist') && pluginInfos.get('pluginlist').plugins !== undefined) {
@@ -61,11 +87,26 @@ define(['require', 'jquery', 'underscore', 'backbone', 'engage/engage_model'], f
         });
       });
       // load plugins done, hide loading and show content
-      this.on("Core:plugin_load_done", function () {
+      this.dispatcher.on("Core:plugin_load_done", function () {
         $(".loading").hide();
         $("#engage_view").show();
       });
     },
+    on : function (event, handler, context) {
+      if(event instanceof EngageEvent){
+        this.dispatcher.on(event.getName(), handler, context);
+      }else{
+        this.dispatcher.on(event, handler, context);
+      }  
+    },
+    trigger : function (event, data) {
+      if(event instanceof EngageEvent){
+        this.dispatcher.trigger(event.getName(), data);
+      }else{
+        this.dispatcher.trigger(event, data);
+      }     
+    },
+    Event : EngageEvent,
     log : function (data) {
       if (window.console) {
         console.log(data);
