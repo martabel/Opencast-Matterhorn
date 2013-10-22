@@ -51,9 +51,6 @@ define(['require', 'jquery', 'underscore', 'backbone', 'engage/engage_model'], f
     });
   }
   
-  //TEST
-  console.log((new Event("video:play", "play event of the videodisplay")).toString());
-  
   /*
    * Main core
    */ 
@@ -64,6 +61,12 @@ define(['require', 'jquery', 'underscore', 'backbone', 'engage/engage_model'], f
       this.dispatcher = _.clone(Backbone.Events);
       //link to the engage model
       this.model = new EngageModel();
+      // Watch on all events
+      this.dispatcher.on("all", function (name) {
+        if(engageCore.model.get("isDebug")){
+          engageCore.log("EventLog: " + name + " occurs!");
+        }   
+      });
       // load Stream Event
       this.dispatcher.on("Core:init", function () {
         // fetch plugin information
@@ -108,18 +111,16 @@ define(['require', 'jquery', 'underscore', 'backbone', 'engage/engage_model'], f
     },
     Event : EngageEvent,
     log : function (data) {
-      if (window.console) {
-        console.log(data);
+      if(this.model.get("isDebug")){
+        if (window.console) {
+          console.log(data);
+        }        
       }
     }
   });
 
   // Create an engage view once the document has loaded
   var engageCore = new EngageCore();
-  // Watch on all events, TODO route to a debug version
-  engageCore.on("all", function (name) {
-    engageCore.log("EventLog: " + name + " occurs!");
-  });
   // Fire init event
   engageCore.trigger("Core:init");
 

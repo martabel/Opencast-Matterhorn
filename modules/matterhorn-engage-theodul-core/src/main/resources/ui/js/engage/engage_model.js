@@ -24,9 +24,7 @@ define(['require', 'jquery', 'underscore', 'backbone'], function (require, $, _,
     // URL of the search enpoint
     urlRoot : PLUGIN_MANAGER_PATH,
     initialize : function () {
-       if (window.console) {
-        console.log("Core: init plugin info model");
-      }
+
     },
     defaults : {
       "pluginlist" : {
@@ -60,6 +58,12 @@ define(['require', 'jquery', 'underscore', 'backbone'], function (require, $, _,
         urlParams[decode(match[1])] = decode(match[2]);
       }
       this.set("urlParameters", urlParams);
+      //set players debug mode
+      if(this.get("urlParameters").debug === "true"){
+        this.set("isDebug", true);
+      }else{
+        this.set("isDebug", false);
+      }
     },
     /*
      * Public properties
