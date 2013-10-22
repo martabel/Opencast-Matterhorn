@@ -30,7 +30,20 @@ define(['require', 'jquery', 'underscore', 'backbone', 'engage/engage_core'], fu
         type: PLUGIN_TYPE,
         version: PLUGIN_VERSION,
         styles: PLUGIN_STYLES,
-        template: PLUGIN_TEMPLATE
+        template: PLUGIN_TEMPLATE,
+        events : {
+          play : new Engage.Event("Video:play", "plays the video", "handler"),
+          pause : new Engage.Event("Video:pause", "pauses the video", "handler"),
+          enablefullscreen : new Engage.Event("Video:goFullscreen", "go to fullscreen of the video", "handler"),
+          disablefullscreen : new Engage.Event("Video:cancelFullscreen", "cancel fullscreen of the video", "handler"),
+          setVolume : new Engage.Event("Video:setVolume", "set the volume of the player", "handler"),
+          getVolume : new Engage.Event("Video:getVolume", "get the volume of the player", "handler"), 
+          timeupdate : new Engage.Event("Video:timeupdate", "notices a timeupdate", "trigger"),
+          volumechange : new Engage.Event("Video:volumechange", "notices a volume change", "trigger"),
+          fullscreenChange : new Engage.Event("Video:fullscreenChange", "notices a fullscreen change", "trigger"),
+          ended : new Engage.Event("Video:ended", "end of the video", "trigger"),
+          sliderStop : new Engage.Event("Slider:stop", "notices a stop of the slider", "handler")
+        }
     };
     var initCount = 4;
     var videoDisplayNamePrefix = "videojs_videodisplay_";
@@ -152,27 +165,27 @@ define(['require', 'jquery', 'underscore', 'backbone', 'engage/engage_core'], fu
 
     function registerEvents(videoDisplay) {
         var theodulVideodisplay = videojs(videoDisplay);
-        Engage.on("Video:play", function() {
+        Engage.on(plugin.events.play, function() {
             theodulVideodisplay.play();
         });
-        Engage.on("Video:pause", function() {
+        Engage.on(plugin.events.pause, function() {
             theodulVideodisplay.pause();
         });
-        Engage.on("Video:goFullscreen", function() {
+        Engage.on(plugin.events.enablefullscreen, function() {
             $("#" + videoDisplay).removeClass("vjs-controls-disabled").addClass("vjs-controls-enabled");
             theodulVideodisplay.requestFullScreen();
         });
-        Engage.on("Video:cancelFullscreen", function() {
+        Engage.on(plugin.events.disablefullscreen, function() {
             $("#" + videoDisplay).removeClass("vjs-controls-enabled").addClass("vjs-controls-disabled");
             theodulVideodisplay.cancelFullScreen();
         });
-        Engage.on("Video:setVolume", function(percentAsDecimal) {
+        Engage.on(plugin.events.setVolume, function(percentAsDecimal) {
             theodulVideodisplay.volume(percentAsDecimal);
         });
-        Engage.on("Video:getVolume", function(callback) {
+        Engage.on(plugin.events.getVolume, function(callback) {
             callback(theodulVideodisplay.volume());
         });
-        Engage.on("Slider:stop", function(time) {
+        Engage.on(plugin.events.sliderStop, function(time) {
             var duration = Engage.model.get("videoDataModel").get("duration");
             var normTime = (time / 1000) * (duration / 1000);
             theodulVideodisplay.currentTime(normTime);
@@ -181,13 +194,13 @@ define(['require', 'jquery', 'underscore', 'backbone', 'engage/engage_core'], fu
             Engage.trigger("Video:timeupdate", theodulVideodisplay.currentTime());
         });
         theodulVideodisplay.on("volumechange", function() {
-            Engage.trigger("Video:volumechange", theodulVideodisplay.volume());
+            Engage.trigger(plugin.events.volumechange, theodulVideodisplay.volume());
         });
         theodulVideodisplay.on("fullscreenchange", function() {
-            Engage.trigger("Video:fullscreenChange");
+            Engage.trigger(plugin.events.fullscreenChange);
         });
         theodulVideodisplay.on("ended", function() {
-            Engage.trigger("Video:ended");
+            Engage.trigger(plugin.events.ended);
             theodulVideodisplay.pause();
             theodulVideodisplay.currentTime(theodulVideodisplay.duration());
         });
